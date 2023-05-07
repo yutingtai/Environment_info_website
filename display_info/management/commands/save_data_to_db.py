@@ -30,16 +30,17 @@ class Command(BaseCommand):
 
         for aqi_info in list_of_dicts_aqi['records']:
             aqi_in_each_site = aqi_info['aqi']
-            station_lat = aqi_info['latitude']
-            station_lon = aqi_info['longitude']
-            publish_time=aqi_info['publishtime']
-            aqi_data = AqiDataDbModel(
-                station_lat=station_lat,
-                station_lon=station_lon,
-                aqi_value=aqi_in_each_site,
-                aqi_time=publish_time,
-            )
-            aqi_data.save()
+            if len(aqi_in_each_site) != 0:
+                station_lat = aqi_info['latitude']
+                station_lon = aqi_info['longitude']
+                publish_time=aqi_info['publishtime']
+                aqi_data = AqiDataDbModel(
+                    station_lat=station_lat,
+                    station_lon=station_lon,
+                    aqi_value=aqi_in_each_site,
+                    aqi_time=publish_time,
+                )
+                aqi_data.save()
 
         for eq_info in list_of_dicts_eq['records']['Earthquake']:
             eq_time = eq_info['EarthquakeInfo']['OriginTime']

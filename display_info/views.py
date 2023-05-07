@@ -3,6 +3,7 @@ from typing import List
 
 from django.shortcuts import render
 from django.http import HttpRequest
+from datetime import datetime
 import folium
 from .models import AqiDataDbModel, EqDataDbModel, IntensityDbModel
 
@@ -13,6 +14,20 @@ class AqiDataUi:
     station_lon: float
     station_lat: float
     aqi_value: int
+
+
+@dataclasses.dataclass
+class EqDataUi:
+    epi_lat: float
+    epi_lon: float
+    eq_time: str
+
+
+@dataclasses.dataclass
+class IntensityDataUi:
+    seismic_intensity: str
+    shaking_area_lat: float
+    shaking_area_lon: float
 
 
 def home_page(request: HttpRequest):
@@ -35,15 +50,15 @@ def home_page(request: HttpRequest):
             color = ''
             if index <= 50:
                 color = 'green'
-            elif 51 < index <= 100:
+            elif 51 <= index <= 100:
                 color = 'yellow'
-            elif 101 < index <= 150:
+            elif 101 <= index <= 150:
                 color = 'orange'
-            elif 151 < index <= 200:
+            elif 151 <= index <= 200:
                 color = 'red'
-            elif 201 < index <= 300:
+            elif 201 <= index <= 300:
                 color = 'purple'
-            elif 301 < index <= 500:
+            elif 301 <= index <= 500:
                 color = 'brown'
             folium.Circle(location=(aqi_data.station_lat, aqi_data.station_lon),
                           color=color,
@@ -55,20 +70,10 @@ def home_page(request: HttpRequest):
 
         feature_gp_aqi.add_to(fmap)
 
-    @dataclasses.dataclass
-    class EqDataUi:
-        epi_lat: float
-        epi_lon: float
-        eq_time: str
-
-    @dataclasses.dataclass
-    class IntensityDataUi:
-        seismic_intensity: str
-        shaking_area_lat: float
-        shaking_area_lon: float
-
+    today = datetime.today()
+    formatted_date = today.strftime("%Y-%m-%d")
     eq_model_list: List[EqDataDbModel] = [model for model in
-                                          EqDataDbModel.objects.filter(eq_time__istartswith='2023-05-04')]  # condition
+                                          EqDataDbModel.objects.filter(eq_time__istartswith=formatted_date)]  # condition
     eq_data_list: List[EqDataUi] = []
     intensity_model_list: List[IntensityDbModel] = []
     intensity_data_list: List[IntensityDataUi] = []
@@ -85,15 +90,16 @@ def home_page(request: HttpRequest):
                 model.intensitydbmodel_set.all()
             )
 
-    for model in intensity_model_list[0]:
-        if model.seismic_intensity:
-            intensity_data_list.append(
-                IntensityDataUi(
-                    seismic_intensity=model.seismic_intensity,
-                    shaking_area_lat=model.shaking_area_lat,
-                    shaking_area_lon=model.shaking_area_lon,
+    if len(intensity_model_list) != 0:
+        for model in intensity_model_list[0]:
+            if model.seismic_intensity:
+                intensity_data_list.append(
+                    IntensityDataUi(
+                        seismic_intensity=model.seismic_intensity,
+                        shaking_area_lat=model.shaking_area_lat,
+                        shaking_area_lon=model.shaking_area_lon,
+                    )
                 )
-            )
 
     feature_gp_eq = folium.FeatureGroup(name='earthquake')
 
