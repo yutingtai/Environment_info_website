@@ -1,10 +1,12 @@
 import dataclasses
+from datetime import datetime
 from typing import List
 
-from django.shortcuts import render
-from django.http import HttpRequest
-from datetime import datetime
 import folium
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
+
+from .management.commands import save_data_to_db, drop_tables
 from .models import AqiDataDbModel, EqDataDbModel, IntensityDbModel
 
 
@@ -73,7 +75,8 @@ def home_page(request: HttpRequest):
     today = datetime.today()
     formatted_date = today.strftime("%Y-%m-%d")
     eq_model_list: List[EqDataDbModel] = [model for model in
-                                          EqDataDbModel.objects.filter(eq_time__istartswith=formatted_date)]  # condition
+                                          EqDataDbModel.objects.filter(
+                                              eq_time__istartswith=formatted_date)]  # condition
     eq_data_list: List[EqDataUi] = []
     intensity_model_list: List[IntensityDbModel] = []
     intensity_data_list: List[IntensityDataUi] = []
@@ -120,3 +123,13 @@ def home_page(request: HttpRequest):
     }
 
     return render(request, 'display_info/index.html', context)
+
+
+def refresh(request: HttpRequest):
+    save_data_to_db.refresh()
+    return HttpResponse(status=200)
+
+
+def delete_all(request: HttpRequest):
+    drop_tables.do_delete()
+    return HttpResponse(status=200)
